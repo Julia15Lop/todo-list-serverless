@@ -15,12 +15,15 @@ def translate(event, context):
     translate = boto3.client('translate')
     table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
     
+    # Variables translate: source_language, review and target_language
+    review_id = event['pathParameters']['id']
     source_language = 'auto'
+    target_language = event['pathParameters']['lang']
     
     # Get item from the database by id
     result = table.get_item(
         Key={
-            'id': event['pathParameters']['id']
+            'id': review_id
         }
     )
         
@@ -30,50 +33,11 @@ def translate(event, context):
         return print("[ItemNotFound]: Input id not found")
         
     # TranslateText operation and passes values
-    translation = translate.translate_text(Text=review,SourceLanguageCode=source_language, TargetLanguageCode=event['pathParameters']['lang'])
+    translated_text = translate.translate_text(Text=review,SourceLanguageCode=source_language, TargetLanguageCode=target_language)
             
-    # create response
+    # Create response
     response = {
         "statusCode": 200,
-        "body": json.dumps(translation["TranslatedText"], cls=decimalencoder.DecimalEncoder)
+        "body": json.dumps(translated_text["TranslatedText"] + "\n", ensure_ascii=False).encode('utf8')
     }
     return response
-        
-#         except Exception as e:
-#             logger.error(result)
-#             raise Exception("[ErrorMessage]: " + str(e))
-            
-#         try:
-#          # The Lambda function calls the TranslateText operation and passes the
-#          # review, the source language, and the target language to get the
-#          # translated review.
-#             result = translate.translate_text(Text=review,
-#             SourceLanguageCode=source_language, TargetLanguageCode=target_language)
-#             logging.info("Translation output: " + str(result))
-#         except Exception as e:
-#             logger.error(response)
-#             raise Exception("[ErrorMessage]: " + str(e))
-        
-#         try:
-#         # After the review is translated, the function stores it using
-#         # the Amazon DynamoDB putItem operation. Subsequent requests
-#         # for this translated review are returned from Amazon DynamoDB.
-#             response = dynamodb.put_item(
-#                 TableName=table,
-#                 Item={
-#                     'review_id': {
-#                         'N': review_id,
-#                     },
-#                     'language': {
-#                         'S': target_language,
-#                     },
-#                     'review': {
-#                         'S': result.get('TranslatedText')
-#                     }
-#                 }
-#             )
-#             logger.info(response)
-#         except Exception as e:
-#             logger.error(e)
-#             raise Exception("[ErrorMessage]: " + str(e))
-#         return result.get('TranslatedText')
