@@ -48,7 +48,8 @@ La estructura actual del repositorio sería la siguiente:
     ├── get.py
     ├── __init__.py
     ├── list.py
-    └── update.py
+    ├── update.py
+    └── translate.py
 ```
 
 Directorios a tener en cuenta:
